@@ -4,8 +4,8 @@
 #include <arpa/inet.h>
 #include <errno.h>
 
-#include "HttpHandler.h"
-#include "config.h"
+#include "../Header/HttpHandler.h"
+#include "../Header/config.h"
 
 HttpHandler::HttpHandler(int sockConn)
         : m_sockConn(sockConn)

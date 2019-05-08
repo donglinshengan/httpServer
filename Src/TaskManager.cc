@@ -4,8 +4,8 @@
 #include <signal.h>
 #include <errno.h>
 
-#include "TaskManager.h"
-#include "HttpHandler.h"
+#include "../Header/TaskManager.h"
+#include "../Header/HttpHandler.h"
 
 
 TaskManager::TaskManager()
