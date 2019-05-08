@@ -2,6 +2,8 @@
 
 #include <stdlib.h>
 
+/* TSingleton: is to make the singleton instance */
+
 template<typename T>
 class TSingleton
 {
