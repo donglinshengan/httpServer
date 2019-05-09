@@ -8,12 +8,10 @@
 #include "./Header/TaskManager.h"
 #include "./Header/config.h"
 
-
-void* clientConnHandler(void* arg);
-
 int main(int argc, char** argv)
 {
     int nExitCode = 0;
+    int reuse = 1;
 
     printf("Server starting....\r\n");
     printf("Server addr [%s:%d]\r\n", server_ip, server_port);
@@ -26,7 +24,13 @@ int main(int argc, char** argv)
         nExitCode = 1;
         goto End;
     }
-
+    
+    // set listenning socket so that the addr binded would be reused immediately when app stops
+    if (-1 == setsockopt(sockListen, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(int)))
+    {
+        printf("set addr reusage failed!\r\n");
+    }
+    
     // Bind socket
     struct sockaddr_in addrServer;
     addrServer.sin_addr.s_addr = inet_addr(server_ip);
