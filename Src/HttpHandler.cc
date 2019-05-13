@@ -46,12 +46,7 @@ int HttpHandler::ClientConnHandler()
         char szPath[256] = {0};
         tagReqMethod method = GetRequestPath(pData, szPath, 256);
 
-        // parse the request method failed
-        if (Method_NULL == method) {
-            break;
-        }
-
-        SendResponseContent(szPath);
+        RequestHandle(method, szPath);
     }
 
     delete pData;
@@ -74,7 +69,7 @@ int HttpHandler::RequestHandle(tagReqMethod method, const char* pPath)
     case Method_HEAD:
         nRet = SendResponseContent(pPath, true);
         break;
-        
+
     case Method_POST:
     case Method_PUT:
     case Method_DELETE:
