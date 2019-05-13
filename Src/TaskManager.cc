@@ -116,7 +116,7 @@ void* TaskManager::doTask(void* pArg)
 bool TaskManager::addTask(int sockConn, int ipClient, int portClient)
 {
     in_addr ip = { ipClient };
-    printf("Client connected [%s:%d]\r\n", inet_ntoa(ip), ntohs(portClient));
+    printf("Client connected [%d:%s:%d]\r\n", sockConn, inet_ntoa(ip), ntohs(portClient));
 
     /* add the connected client socket as a task */
     pthread_mutex_lock(&m_mutex);
