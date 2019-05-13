@@ -136,7 +136,7 @@ int HttpHandler::SendFailureResponse(int nErrCode, const char* pPath)
             "Access-Control-Allow-Headers: Origin, X-Requested-With, Content-Type, Accept\r\n"
             "Access-Control-Allow-Credentials: true\r\n"
             "Access-Control-Allow-Methods: GET, POST, PUT,DELETE\r\n\r\n"
-            "<html><title>%s Page Not Found</title><body><h1>Page Not Found</body></html>",
+            "<html><title>Page Not Found</title><body><h1>%s Page Not Found</body></html>",
             nErrCode, pPath);
     
     return send(m_sockConn, (void*)szResponse, strlen(szResponse), 0);
