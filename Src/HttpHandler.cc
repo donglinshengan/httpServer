@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <arpa/inet.h>
@@ -43,10 +44,9 @@ int HttpHandler::ClientConnHandler()
         
         printf("[sock: %d] recevie data[len=%d]:\r\n%s\r\n", m_sockConn, nLen, pData);        
 
-        char szPath[256] = {0};
-        tagReqMethod method = GetRequestPath(pData, szPath, 256);
-
-        RequestHandle(method, szPath);
+        if (-1 == HandleRequest(pData)) {
+            break;
+        }
     }
 
     delete pData;
@@ -56,21 +56,54 @@ int HttpHandler::ClientConnHandler()
     return 0;
 }
 
-int HttpHandler::RequestHandle(tagReqMethod method, const char* pPath)
+int HttpHandler::HandleRequest(const char* pDataRequest)
 {
     int nRet = 0;
+    char szPath[256] = {0};
+    tagReqMethod method = GetRequestPath(pDataRequest, szPath, 256);
 
     switch (method)
     {
-    case Method_GET:
-        nRet = SendResponseContent(pPath);
+    case Method_GET: {
+        nRet = SendResponseContent(szPath);
         break;
-
-    case Method_HEAD:
-        nRet = SendResponseContent(pPath, true);
+    }
+    case Method_HEAD: {
+        nRet = SendResponseContent(szPath, true);
         break;
+    }
+    case Method_POST:{
+        char szExpect[128] = {0};
+        GetHeaderContent(pDataRequest, "Expect", szExpect, 128);
+        if (0 != szExpect[0]) {
+            /* tell the client that server could handle post data larger than 1024 bytes*/
+            SendExpectResponse();
+        }
 
-    case Method_POST:
+        char szContentType[128] = {0};
+        char szBoundary[128] = {0};
+        char szContentLen[64] = {0};
+
+        GetHeaderContent(pDataRequest, "Content-Length", szContentLen, 64);
+        if (atoll(szContentLen) > 10 * 2<<20) {
+            /* content could not large than 10M */
+            return -1;
+        }
+
+        GetHeaderContent(pDataRequest, "Content-Type", szContentType, 128);
+        if (NULL == strstr(szContentType, "multipart/form-data")) {
+            /* just the multipart/form-data */
+            return -1;
+        }
+
+        ParseBoundaryArg(szContentType, szBoundary, 128);
+        if (0 == szBoundary[0]) {
+            return -1;
+        }
+
+        /* handle the post data */
+        nRet = HandlePostData(szBoundary);
+    }
     case Method_PUT:
     case Method_DELETE:
     case Method_CONNECT:
@@ -122,6 +155,20 @@ int HttpHandler::SendResponseContent(const char* pPath, bool bOnlyHeader)
     }
 
     fclose (pFile);
+}
+
+int HttpHandler::SendExpectResponse()
+{
+    int nLen = 0;
+    char szHeader[] = "HTTP/1.1 100 Continue\r\n"
+		"Server : HttpServer/1.0 (Linux)\r\n"
+		"Pragma : no-cache\r\n"
+		"Connection : Keep-Alive\r\n"
+		"Content-Type : text/html; application/x-www-form-urlencoded; Language=UTF-8\r\n\r\n";
+    
+    nLen = send(m_sockConn, (void*)szHeader, strlen(szHeader), 0);
+
+    return nLen;
 }
 
 int HttpHandler::SendFailureResponse(int nErrCode, const char* pPath)
@@ -285,12 +332,68 @@ char* HttpHandler::GetHeaderContent(const char* pData, const char* pName, char* 
         while (*posBegin == ' ') ++posBegin;
 
         const char* posEnd = posBegin;
-        while (' ' != *posEnd && '\r' != *posEnd && '\n' != *posEnd) ++posEnd;
+        while ('\r' != *posEnd && '\n' != *posEnd) ++posEnd;
         
         int nLenCpy = posEnd - posBegin;
         nLenCpy = nLenCpy < nSize ? nLenCpy : nSize - 1;
         strncpy(pBuf, posBegin, nLenCpy);
     }
     
+    return pBuf;
+}
+int HttpHandler::HandlePostData(const char* pBoundary)
+{
+    char* pRecvBuf = new char[1024];
+
+    while (true)
+    {
+        memset(pRecvBuf, 0, 1024);
+        int nLen = recv(m_sockConn, (void*)pRecvBuf, 1024, 0);
+
+        if (-1 == nLen) {
+            if (errno == EINTR) {
+                continue;
+            }
+            printf("recv() error with errno=%d\r\n", errno);
+            break;
+        }
+        if (0 == nLen) {
+            printf("nothing received from client with errno=%d\r\n", errno);
+            break;
+        }
+        
+        // handle the recv data
+    }
+
+    char szHeader[] = "HTTP/1.1 200 OK\r\n"
+		"Server : HttpServer/1.0 (Linux)\r\n"
+		"Pragma : no-cache\r\n"
+		"Connection : Keep-Alive\r\n"
+		"Content-Type : text/html; application/x-www-form-urlencoded; Language=UTF-8\r\n\r\n";
+    
+    send(m_sockConn, (void*)szHeader, strlen(szHeader), 0);
+
+    delete pRecvBuf;
+    return 0;
+}
+
+char* HttpHandler::ParseBoundaryArg(const char* pData, char* pBuf, int nSize)
+{
+    const char* pBeg = strstr(pData, "boundary=");
+    const char* pEnd = NULL;
+
+    memset(pBuf, 0, nSize);
+
+    if (NULL != pBeg) {
+        pBeg += 9;
+        pEnd = strchr(pBeg, ';');
+
+        if (NULL == pEnd) {
+            strcpy(pBuf, pBeg);
+        } else {
+            strncpy(pBuf, pBeg, pEnd - pBeg);
+        }
+    }
+
     return pBuf;
 }
