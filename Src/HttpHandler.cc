@@ -102,7 +102,7 @@ int HttpHandler::HandleRequest(const char* pDataRequest)
         }
 
         /* handle the post data */
-        nRet = HandlePostData(szBoundary);
+        nRet = HandlePostData(szPath, szBoundary);
     }
     case Method_PUT:
     case Method_DELETE:
@@ -341,7 +341,7 @@ char* HttpHandler::GetHeaderContent(const char* pData, const char* pName, char* 
     
     return pBuf;
 }
-int HttpHandler::HandlePostData(const char* pBoundary)
+int HttpHandler::HandlePostData(const char* pPath, const char* pBoundary)
 {
     char* pRecvBuf = new char[1024];
 

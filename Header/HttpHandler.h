@@ -33,7 +33,7 @@ protected:
     /* get the http header sent by the client */
     char* GetHeaderContent(const char* pData, const char* pName, char* pBuf, int nSize);
     /* handle the post request data */
-    int HandlePostData(const char* pBoundary);
+    int HandlePostData(const char* pPath, const char* pBoundary);
 
 protected:
     char* ParseBoundaryArg(const char* pData, char* pBuf, int nSize);
