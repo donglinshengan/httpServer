@@ -20,7 +20,7 @@ protected:
 
 private:
     bool                            m_bShutDown;
-    const int                       m_nTotalTaskCount;  // total count of the task
+    const size_t                    m_nTotalTaskCount;  // total count of the task
     std::vector<int>                m_vecSocksConn;     // the sockets of connected
     std::vector<pthread_t>          m_vecTaskId;        // tasks's ids
     pthread_t                       m_thrMgrId;         // manager thread id

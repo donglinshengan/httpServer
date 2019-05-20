@@ -155,6 +155,8 @@ int HttpHandler::SendResponseContent(const char* pPath, bool bOnlyHeader)
     }
 
     fclose (pFile);
+
+    return 0;
 }
 
 int HttpHandler::SendExpectResponse()

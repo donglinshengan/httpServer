@@ -9,9 +9,9 @@
 
 
 TaskManager::TaskManager()
-        : m_nTotalTaskCount(1024)
+        : m_bShutDown(false)
+        , m_nTotalTaskCount(1024)
         , m_thrMgrId(0)
-        , m_bShutDown(false)
 {
     pthread_mutex_init(&m_mutex, NULL);
 
@@ -115,7 +115,7 @@ void* TaskManager::doTask(void* pArg)
 
 bool TaskManager::addTask(int sockConn, int ipClient, int portClient)
 {
-    in_addr ip = { ipClient };
+    in_addr ip = { (in_addr_t)ipClient };
     printf("Client connected [%d:%s:%d]\r\n", sockConn, inet_ntoa(ip), ntohs(portClient));
 
     /* add the connected client socket as a task */
